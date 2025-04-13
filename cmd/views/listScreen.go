@@ -841,10 +841,6 @@ func (m *ListScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			itemRepository.StoreItemsState(m.Items())
 		}
 
-		if key.Matches(msg, m.KeyMap.ForceQuit) {
-			return m, tea.Quit
-		}
-
 	case cmd.TaskAdded:
 		position := m.Cursor()
 		m.InsertItem(position+1, msg.Item)

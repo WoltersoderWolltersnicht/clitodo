@@ -6,12 +6,14 @@ import (
 	"clitodo/cmd"
 	"clitodo/pkg/domain"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type addTaskScreen struct {
 	textInput textinput.Model
+	KeyMap    cmd.KeyMap
 }
 
 func NewAddTaskScreen() addTaskScreen {
@@ -23,6 +25,7 @@ func NewAddTaskScreen() addTaskScreen {
 
 	return addTaskScreen{
 		textInput: ti,
+		KeyMap:    cmd.DefaultKeyMap(),
 	}
 }
 
@@ -34,10 +37,7 @@ func (m addTaskScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
-			return m, tea.Quit
-		case "enter":
+		if key.Matches(msg, m.KeyMap.AddTask) { //"enter"
 			return m, enterTask(m)
 		}
 	}

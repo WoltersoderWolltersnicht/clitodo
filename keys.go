@@ -5,9 +5,6 @@ import "github.com/charmbracelet/bubbles/key"
 // KeyMap defines keybindings. It satisfies to the help.KeyMap interface, which
 // is used to render the menu.
 type KeyMap struct {
-	// AddTaskScreen
-	AddTask key.Binding
-
 	// Keybindings used when browsing the list.
 	CursorUp     key.Binding
 	CursorDown   key.Binding
@@ -38,12 +35,6 @@ type KeyMap struct {
 // DefaultKeyMap returns a default set of keybindings.
 func DefaultKeyMap() KeyMap {
 	return KeyMap{
-		//AddTaskScreen
-		AddTask: key.NewBinding(
-			key.WithKeys("enter"),
-			key.WithHelp("enter", "add task"),
-		),
-
 		// Browsing.
 		CursorUp: key.NewBinding(
 			key.WithKeys("up", "k"),
