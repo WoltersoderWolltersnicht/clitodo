@@ -1283,14 +1283,6 @@ func (m ListScreen) populatedView() string {
 
 	var b strings.Builder
 
-	// Empty states
-	if len(items) == 0 {
-		if m.filterState == Filtering {
-			return ""
-		}
-		return m.Styles.NoItems.Render("No " + m.itemNamePlural + ".")
-	}
-
 	if len(items) > 0 {
 		start, end := m.Paginator.GetSliceBounds(len(items))
 		docs := items[start:end]
