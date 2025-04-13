@@ -561,7 +561,7 @@ func (m *ListScreen) CursorDown() {
 }
 
 func (m *ListScreen) MoveItemUp() {
-	if m.cursor <= 0 || m.cursor >= len(m.items)-1 {
+	if m.cursor <= 0 || m.cursor >= len(m.items) {
 		return
 	}
 
