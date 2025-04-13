@@ -1,4 +1,4 @@
-package main
+package views
 
 import (
 	"fmt"
@@ -8,6 +8,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"clitodo/cmd"
+	"clitodo/pkg/domain"
 )
 
 // DefaultItemStyles defines styling for a default list item.
@@ -124,7 +127,7 @@ func (d DefaultDelegate) Update(msg tea.Msg, m *ListScreen) tea.Cmd {
 }
 
 // Render prints an item.
-func (d DefaultDelegate) Render(w io.Writer, m ListScreen, index int, item Item) {
+func (d DefaultDelegate) Render(w io.Writer, m ListScreen, index int, item domain.Item) {
 	var (
 		title        string
 		matchedRunes []int
@@ -146,7 +149,7 @@ func (d DefaultDelegate) Render(w io.Writer, m ListScreen, index int, item Item)
 
 	// Prevent text from exceeding list width
 	textwidth := m.width - s.NormalTitle.GetPaddingLeft() - s.NormalTitle.GetPaddingRight()
-	title = ansi.Truncate(title, textwidth, ellipsis)
+	title = ansi.Truncate(title, textwidth, cmd.Ellipsis)
 
 	// Conditions
 	var (

@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Todo 1",
+    "completed": true
+  },
+  {
+    "name": "Todo 3",
+    "completed": true
+  },
+  {
+    "name": "Todo 2",
+    "completed": false
+  },
+  {
+    "name": "Amar a maddie",
+    "completed": false
+  }
+]

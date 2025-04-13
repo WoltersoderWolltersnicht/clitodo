@@ -1,7 +1,10 @@
-package main
+package views
 
 import (
 	"fmt"
+
+	"clitodo/cmd"
+	"clitodo/pkg/domain"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,7 +14,7 @@ type addTaskScreen struct {
 	textInput textinput.Model
 }
 
-func AddTaskScreen() addTaskScreen {
+func NewAddTaskScreen() addTaskScreen {
 	ti := textinput.New()
 	ti.Placeholder = "TaskName"
 	ti.Focus()
@@ -35,7 +38,7 @@ func (m addTaskScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			return MainListScreen.Update(m)
+			return m, enterTask(m)
 		}
 	}
 	m.textInput, cmd = m.textInput.Update(msg)
@@ -48,4 +51,11 @@ func (m addTaskScreen) View() string {
 		m.textInput.View(),
 		"(esc to quit)",
 	) + "\n"
+}
+
+func enterTask(m addTaskScreen) tea.Cmd {
+	return func() tea.Msg {
+		item := domain.NewItem(m.textInput.Value())
+		return cmd.TaskAdded{IsSucces: true, Item: item}
+	}
 }

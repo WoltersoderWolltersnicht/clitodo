@@ -1,7 +1,7 @@
 // Package list provides a feature-rich Bubble Tea component for browsing
 // a general purpose list of items. It features optional filtering, pagination,
 // help, status messages, and a spinner to indicate activity.
-package main
+package views
 
 import (
 	"fmt"
@@ -20,11 +20,15 @@ import (
 	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
+
+	"clitodo/cmd"
+	"clitodo/pkg/domain"
+	"clitodo/pkg/storage"
 )
 
 type ItemDelegate interface {
 	// Render renders the item's view.
-	Render(w io.Writer, m ListScreen, index int, item Item)
+	Render(w io.Writer, m ListScreen, index int, item domain.Item)
 
 	// Height is the height of the list item.
 	Height() int
@@ -40,15 +44,15 @@ type ItemDelegate interface {
 }
 
 type filteredItem struct {
-	index   int   // index in the unfiltered list
-	item    Item  // item matched
-	matches []int // rune indices of matched items
+	index   int         // index in the unfiltered list
+	item    domain.Item // item matched
+	matches []int       // rune indices of matched items
 }
 
 type filteredItems []filteredItem
 
-func (f filteredItems) items() []Item {
-	agg := make([]Item, len(f))
+func (f filteredItems) items() []domain.Item {
+	agg := make([]domain.Item, len(f))
 	for i, v := range f {
 		agg[i] = v.item
 	}
@@ -60,7 +64,7 @@ func (f filteredItems) items() []Item {
 type FilterMatchesMsg []filteredItem
 
 // FilterFunc takes a term and a list of strings to search through
-// (defined by Item#FilterValue).
+// (defined by domain.Item#FilterValue).
 // It should return a sorted list of ranks.
 type FilterFunc func(string, []string) []Rank
 
@@ -137,11 +141,11 @@ type ListScreen struct {
 	itemNamePlural   string
 
 	Title             string
-	Styles            Styles
+	Styles            cmd.Styles
 	InfiniteScrolling bool
 
 	// Key mappings for navigating the list.
-	KeyMap KeyMap
+	KeyMap cmd.KeyMap
 
 	// Filter is used to filter the list.
 	Filter FilterFunc
@@ -174,7 +178,7 @@ type ListScreen struct {
 	statusMessageTimer *time.Timer
 
 	// The master set of items we're working with.
-	items []Item
+	items []domain.Item
 
 	// Filtered items we're currently displaying. Filtering, toggles and so on
 	// will alter this slice so we can show what is relevant. For that reason,
@@ -189,7 +193,7 @@ func NewListScreen() *ListScreen {
 	items := getTasks()
 	var delegate ItemDelegate = NewDefaultDelegate()
 
-	styles := DefaultStyles()
+	styles := cmd.DefaultStyles()
 
 	sp := spinner.New()
 	sp.Spinner = spinner.Line
@@ -216,7 +220,7 @@ func NewListScreen() *ListScreen {
 		itemNameSingular:      "item",
 		itemNamePlural:        "items",
 		filteringEnabled:      true,
-		KeyMap:                DefaultKeyMap(),
+		KeyMap:                cmd.DefaultKeyMap(),
 		Filter:                DefaultFilter,
 		Styles:                styles,
 		Title:                 "Todo List",
@@ -359,12 +363,12 @@ func (m ListScreen) ShowHelp() bool {
 }
 
 // Items returns the items in the list.
-func (m ListScreen) Items() []Item {
+func (m ListScreen) Items() []domain.Item {
 	return m.items
 }
 
 // SetItems sets the items available in the list. This returns a command.
-func (m *ListScreen) SetItems(i []Item) tea.Cmd {
+func (m *ListScreen) SetItems(i []domain.Item) tea.Cmd {
 	var cmd tea.Cmd
 	m.items = i
 
@@ -395,7 +399,7 @@ func (m *ListScreen) ResetFilter() {
 }
 
 // SetItem replaces an item at the given index. This returns a command.
-func (m *ListScreen) SetItem(index int, item Item) tea.Cmd {
+func (m *ListScreen) SetItem(index int, item domain.Item) tea.Cmd {
 	var cmd tea.Cmd
 	m.items[index] = item
 
@@ -409,7 +413,7 @@ func (m *ListScreen) SetItem(index int, item Item) tea.Cmd {
 
 // InsertItem inserts an item at the given index. If the index is out of the upper bound,
 // the item will be appended. This returns a command.
-func (m *ListScreen) InsertItem(index int, item Item) tea.Cmd {
+func (m *ListScreen) InsertItem(index int, item domain.Item) tea.Cmd {
 	var cmd tea.Cmd
 	m.items = insertItemIntoSlice(m.items, item, index)
 
@@ -437,7 +441,7 @@ func (m *ListScreen) SetDelegate(d ItemDelegate) {
 }
 
 // VisibleItems returns the total items available to be shown.
-func (m ListScreen) VisibleItems() []Item {
+func (m ListScreen) VisibleItems() []domain.Item {
 	if m.filterState != Unfiltered {
 		return m.filteredItems.items()
 	}
@@ -445,7 +449,7 @@ func (m ListScreen) VisibleItems() []Item {
 }
 
 // SelectedItem returns the current selected item in the list.
-func (m ListScreen) SelectedItem() *Item {
+func (m ListScreen) SelectedItem() *domain.Item {
 	i := m.Index()
 
 	items := m.VisibleItems()
@@ -812,29 +816,28 @@ func (m *ListScreen) Init() tea.Cmd {
 	return nil
 }
 
+func addTask() tea.Msg {
+	return cmd.AddTaskTrigger(true)
+}
+
 // Update is the Bubble Tea update loop.
 func (m *ListScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-
-		if msg.String() == "ctrl+c" {
-			return m, tea.Quit
-		}
 		if msg.String() == "ctrl+a" {
-			addTaskScreen := AddTaskScreen()
-			return addTaskScreen.Update(nil)
+			return m, addTask
 		}
 		if msg.String() == "ctrl+d" {
 			m.RemoveItem(m.Cursor())
-			var itemRepository FileItemStorage = NewFileItemRepository()
+			var itemRepository storage.FileItemStorage = storage.NewFileItemRepository()
 			itemRepository.StoreItemsState(m.Items())
 		}
 		if msg.String() == "enter" {
-			var item *Item = m.SelectedItem()
+			var item *domain.Item = m.SelectedItem()
 			item.ItemCompleted = !item.ItemCompleted
-			var itemRepository FileItemStorage = NewFileItemRepository()
+			var itemRepository storage.FileItemStorage = storage.NewFileItemRepository()
 			itemRepository.StoreItemsState(m.Items())
 		}
 
@@ -842,11 +845,10 @@ func (m *ListScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case addTaskScreen:
-		item := NewItem(msg.textInput.Value())
+	case cmd.TaskAdded:
 		position := m.Cursor()
-		m.InsertItem(position+1, item)
-		var itemRepository FileItemStorage = NewFileItemRepository()
+		m.InsertItem(position+1, msg.Item)
+		var itemRepository storage.FileItemStorage = storage.NewFileItemRepository()
 		itemRepository.StoreItemsState(m.Items())
 		return m, tea.Batch(cmds...)
 
@@ -878,12 +880,12 @@ func (m *ListScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func getTasks() []Item {
-	var itemRepository FileItemStorage = NewFileItemRepository()
+func getTasks() []domain.Item {
+	var itemRepository storage.FileItemStorage = storage.NewFileItemRepository()
 
 	items, err := itemRepository.GetItems()
 	if err != nil {
-		return []Item{}
+		return []domain.Item{}
 	}
 
 	return items
@@ -1191,7 +1193,7 @@ func (m ListScreen) titleView() string {
 		// Status message
 		if m.filterState != Filtering {
 			view += "  " + m.statusMessage
-			view = ansi.Truncate(view, m.width-spinnerWidth, ellipsis)
+			view = ansi.Truncate(view, m.width-spinnerWidth, cmd.Ellipsis)
 		}
 	}
 
@@ -1354,14 +1356,14 @@ func filterItems(m ListScreen) tea.Cmd {
 	}
 }
 
-func insertItemIntoSlice(items []Item, item Item, index int) []Item {
+func insertItemIntoSlice(items []domain.Item, item domain.Item, index int) []domain.Item {
 	if len(items) == 0 {
 		return append(items, item)
 	}
-	return append(items[:index], append([]Item{item}, items[index:]...)...)
+	return append(items[:index], append([]domain.Item{item}, items[index:]...)...)
 }
 
-func removeItemFromSlice(i []Item, index int) []Item {
+func removeItemFromSlice(i []domain.Item, index int) []domain.Item {
 	if index >= len(i) {
 		return i
 	}

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"github.com/charmbracelet/lipgloss"
@@ -6,7 +6,7 @@ import (
 
 const (
 	bullet   = "•"
-	ellipsis = "…"
+	Ellipsis = "…"
 )
 
 // Styles contains style definitions for this list component. By default, these
