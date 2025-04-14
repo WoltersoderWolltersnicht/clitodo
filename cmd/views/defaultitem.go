@@ -134,13 +134,12 @@ func (d DefaultDelegate) Render(w io.Writer, m ListScreen, index int, item domai
 		s            = &d.Styles
 	)
 
+	completed := s.EmptyCheckMark.String()
 	if item.Completed() {
-		title = s.CheckMark.String()
-	} else {
-		title = s.EmptyCheckMark.String()
+		completed = s.CheckMark.String()
 	}
 
-	title += item.Title()
+	title = item.Title()
 
 	if m.width <= 0 {
 		// short-circuit
@@ -153,51 +152,28 @@ func (d DefaultDelegate) Render(w io.Writer, m ListScreen, index int, item domai
 
 	// Conditions
 	var (
-		isSelected  = index == m.Index()
-		emptyFilter = m.FilterState() == Filtering && m.FilterValue() == ""
-		isFiltered  = m.FilterState() == Filtering || m.FilterState() == FilterApplied
+		isSelected = index == m.Index()
+		isFiltered = m.FilterState() == Filtering || m.FilterState() == FilterApplied
 	)
 
 	if isFiltered && index < len(m.filteredItems) {
 		// Get indices of matched characters
 		matchedRunes = m.MatchesForItem(index)
+		// Highlight matches
+		unmatched := s.SelectedTitle.Inline(true)
+		matched := unmatched.Inherit(s.FilterMatch)
+		title = lipgloss.StyleRunes(title, matchedRunes, matched, unmatched)
+	} else {
+		title = s.DimmedTitle.Render(title)
 	}
 
-	if emptyFilter {
-		title = s.DimmedTitle.Render(title)
-	} else if isSelected && m.FilterState() != Filtering {
-		if isFiltered {
-			// Highlight matches
-			unmatched := s.SelectedTitle.Inline(true)
-			matched := unmatched.Inherit(s.FilterMatch)
-			title = lipgloss.StyleRunes(title, matchedRunes, matched, unmatched)
-		}
+	title = completed + title
+
+	if isSelected && m.FilterState() != Filtering {
 		title = s.SelectedTitle.Render(title)
 	} else {
-		if isFiltered {
-			// Highlight matches
-			unmatched := s.NormalTitle.Inline(true)
-			matched := unmatched.Inherit(s.FilterMatch)
-			title = lipgloss.StyleRunes(title, matchedRunes, matched, unmatched)
-		}
 		title = s.NormalTitle.Render(title)
 	}
 
 	fmt.Fprintf(w, "%s", title) //nolint: errcheck
-}
-
-// ShortHelp returns the delegate's short help.
-func (d DefaultDelegate) ShortHelp() []key.Binding {
-	if d.ShortHelpFunc != nil {
-		return d.ShortHelpFunc()
-	}
-	return nil
-}
-
-// FullHelp returns the delegate's full help.
-func (d DefaultDelegate) FullHelp() [][]key.Binding {
-	if d.FullHelpFunc != nil {
-		return d.FullHelpFunc()
-	}
-	return nil
 }
