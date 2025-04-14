@@ -6,5 +6,8 @@ Simple Todo List TUI using [Bubbletea](https://github.com/charmbracelet/bubblete
 ```go run .```
 
 ## Exmapes
-![image](https://github.com/user-attachments/assets/6a223f72-22f0-48c3-adbb-8aef53975060)
-![image](https://github.com/user-attachments/assets/b727c77f-f595-47f3-b4f8-4ba11a33d715)
+View Todos
+![image](https://github.com/user-attachments/assets/2e27b061-286d-437a-99c9-bcf46e09b00d)
+
+Add Todo (ctrl)
+![image](https://github.com/user-attachments/assets/5b03679c-8ab3-4cce-aa86-a54a9a7141b5)
