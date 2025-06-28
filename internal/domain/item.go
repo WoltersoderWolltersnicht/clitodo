@@ -1,4 +1,4 @@
-package main
+package pkg
 
 type Item struct {
 	ItemTitle     string `json:"name"`

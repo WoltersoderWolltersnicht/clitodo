@@ -1,16 +1,17 @@
 package main
 
 import (
+	"clitodo/pkg"
 	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var MainListScreen *ListScreen
+var MainListScreen *pkg.ListScreen
 
 func main() {
-	MainListScreen = NewListScreen()
+	MainListScreen = pkg.NewListScreen()
 	p := tea.NewProgram(MainListScreen, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {

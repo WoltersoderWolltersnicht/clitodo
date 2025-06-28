@@ -1,4 +1,4 @@
-package main
+package component
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ func (m addTaskScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			return MainListScreen.Update(m)
+			return main.MainListScreen.Update(m)
 		}
 	}
 	m.textInput, cmd = m.textInput.Update(msg)
